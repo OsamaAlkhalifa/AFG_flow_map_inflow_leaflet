@@ -65,15 +65,17 @@
     dynamicTyping: true,
     skipEmptyLines: true,
     complete: function(results) {
+      var allFeatures = results.data.map(function(datum) {
+        return {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
+          properties: datum
+        };
+      });
+
       var geoJsonFeatureCollection = {
         type: 'FeatureCollection',
-        features: results.data.map(function(datum) {
-          return {
-            type: 'Feature',
-            geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
-            properties: datum
-          };
-        })
+        features: allFeatures
       };
 
       var flowmapLayer = L.canvasFlowmapLayer(geoJsonFeatureCollection, {
@@ -132,11 +134,8 @@
         if (selectedFMP === '') {
           flowmapLayer.selectAllFeaturesForPathDisplay();
         } else {
-          var matchingFeatures = [];
-          flowmapLayer.originFeatures.forEach(function(feature) {
-            if (feature.properties.s_fmp_name === selectedFMP) {
-              matchingFeatures.push(feature);
-            }
+          var matchingFeatures = allFeatures.filter(function(feature) {
+            return feature.properties.s_fmp_name === selectedFMP;
           });
           if (matchingFeatures.length > 0) {
             flowmapLayer.selectFeaturesForPathDisplay(matchingFeatures, 'SELECTION_NEW');
