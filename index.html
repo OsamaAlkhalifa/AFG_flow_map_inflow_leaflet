@@ -41,6 +41,8 @@
     <div style="margin-top: 5px;"><div style="height: 8px; width: 30px; background: yellow; display: inline-block;"></div> 1–5,000</div>
     <div style="margin-top: 5px;"><div style="height: 8px; width: 30px; background: orange; display: inline-block;"></div> 5,001–25,000</div>
     <div style="margin-top: 5px;"><div style="height: 8px; width: 30px; background: red; display: inline-block;"></div> 25,001–60,000</div>
+    <div style="margin-top: 5px;"><div style="height: 8px; width: 30px; background: cyan; display: inline-block; border-radius: 50%;"></div> Origin Point</div>
+    <div style="margin-top: 5px;"><div style="height: 8px; width: 30px; background: magenta; display: inline-block; border-radius: 50%;"></div> Destination Point</div>
   </div>
 </div>
 
@@ -68,10 +70,7 @@
         features: results.data.map(function(datum) {
           return {
             type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [datum.s_lon, datum.s_lat]
-            },
+            geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
             properties: datum
           };
         })
@@ -92,17 +91,26 @@
             { classMinValue: 5001, classMaxValue: 25000, symbol: { strokeStyle: 'rgba(255,165,0,0.8)', lineWidth: 4, lineCap: 'round', shadowColor: 'rgba(255,165,0,0.8)', shadowBlur: 3 } },
             { classMinValue: 25001, classMaxValue: 60000, symbol: { strokeStyle: 'rgba(255,0,0,0.8)', lineWidth: 6, lineCap: 'round', shadowColor: 'rgba(255,0,0,0.8)', shadowBlur: 4 } }
           ],
-          defaultSymbol: {
-            strokeStyle: 'rgba(200,200,200,0.5)',
-            lineWidth: 1,
-            lineCap: 'round',
-            shadowColor: 'rgba(200,200,200,0.5)',
-            shadowBlur: 1
-          }
+          defaultSymbol: { strokeStyle: 'rgba(200,200,200,0.5)', lineWidth: 1, lineCap: 'round', shadowColor: 'rgba(200,200,200,0.5)', shadowBlur: 1 }
         },
         pathDisplayMode: 'selection',
         animationStarted: false
       }).addTo(map);
+
+      var originLayer = L.layerGroup();
+      var destinationLayer = L.layerGroup();
+
+      results.data.forEach(function(datum) {
+        if (datum.s_lon && datum.s_lat) {
+          L.circleMarker([datum.s_lat, datum.s_lon], { radius: 4, color: 'cyan' }).bindPopup('Origin: ' + datum.s_fmp_name).addTo(originLayer);
+        }
+        if (datum.e_lon && datum.e_lat) {
+          L.circleMarker([datum.e_lat, datum.e_lon], { radius: 4, color: 'magenta' }).bindPopup('Destination: ' + datum.e_city_name).addTo(destinationLayer);
+        }
+      });
+
+      originLayer.addTo(map);
+      destinationLayer.addTo(map);
 
       var uniqueFMPs = new Set(results.data.map(function(d) { return d.s_fmp_name; }));
       uniqueFMPs.forEach(function(fmpName) {
@@ -132,7 +140,6 @@
         }
       });
 
-      // Auto-select and animate all flows after delay
       setTimeout(function() {
         flowmapLayer.selectAllFeaturesForPathDisplay();
         flowmapLayer.playAnimation();
